@@ -1,18 +1,3 @@
-# Copyright 2017 The TensorFlow Authors. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# ==============================================================================
-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -35,6 +20,9 @@ class create_imageClassify():
         self.output_layer = "InceptionV3/Predictions/Reshape_1"
         self.graph = None
         self.labels = None
+        self.input_operation = None
+        self.output_operation = None
+        self.sess = None
 
     def load_graph(self):
         self.graph = tf.Graph()
@@ -44,6 +32,12 @@ class create_imageClassify():
             graph_def.ParseFromString(f.read())
         with self.graph.as_default():
             tf.import_graph_def(graph_def)
+
+        input_name = "import/" + self.input_layer
+        output_name = "import/" + self.output_layer
+        self.input_operation = self.graph.get_operation_by_name(input_name)
+        self.output_operation = self.graph.get_operation_by_name(output_name)
+        self.sess = tf.compat.v1.Session(graph=self.graph)
 
     def read_tensor_from_image_file(self, frame):
 
@@ -66,17 +60,13 @@ class create_imageClassify():
             label.append(l.rstrip())
         return label
 
-    def init(self, frame):
+    def predict(self, frame):
         t = self.read_tensor_from_image_file(frame)
-        input_name = "import/" + self.input_layer
-        output_name = "import/" + self.output_layer
-        input_operation = self.graph.get_operation_by_name(input_name)
-        output_operation = self.graph.get_operation_by_name(output_name)
 
-        with tf.compat.v1.Session(graph=self.graph) as sess:
-            results = sess.run(output_operation.outputs[0], {
-                input_operation.outputs[0]: t
-            })
+        # with tf.compat.v1.Session(graph=self.graph) as sess:
+        results = self.sess.run(self.output_operation.outputs[0], {
+            self.input_operation.outputs[0]: t
+        })
         results = np.squeeze(results)
 
         top_result = results.argsort()[-1:][::-1]

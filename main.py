@@ -20,7 +20,7 @@ def predictVideocap(path):
         ret, frame = vidcap.read()
         if ret == True:
 
-            results, top_label = imageClassify.init(frame)
+            results, top_label = imageClassify.predict(frame)
 
             cv2.putText(frame, "{}: {:.2f}%".format(labels[top_label[0]], results[top_label[0]]*100),
                         bottomRightOfText,
