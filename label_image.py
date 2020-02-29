@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import argparse
 import numpy as np
 import tensorflow as tf
@@ -9,20 +5,19 @@ import tensorflow as tf
 
 class create_imageClassify():
     def __init__(self):
-        self.model_file = \
-            "./data/inception_v3_2016_08_28_frozen.pb"
+        self.labels = None
+        self.graph = None
+        self.sess = None
+        self.input_operation = None
+        self.output_operation = None
+        self.input_layer = "input"
+        self.output_layer = "InceptionV3/Predictions/Reshape_1"
+        self.model_file = "./data/inception_v3_2016_08_28_frozen.pb"
         self.label_file = "./data/imagenet_slim_labels.txt"
         self.input_height = 299
         self.input_width = 299
         self.input_mean = 0
         self.input_std = 255
-        self.input_layer = "input"
-        self.output_layer = "InceptionV3/Predictions/Reshape_1"
-        self.graph = None
-        self.labels = None
-        self.input_operation = None
-        self.output_operation = None
-        self.sess = None
 
     def load_graph(self):
         self.graph = tf.Graph()
@@ -63,12 +58,10 @@ class create_imageClassify():
     def predict(self, frame):
         t = self.read_tensor_from_image_file(frame)
 
-        # with tf.compat.v1.Session(graph=self.graph) as sess:
         results = self.sess.run(self.output_operation.outputs[0], {
             self.input_operation.outputs[0]: t
         })
         results = np.squeeze(results)
-
         top_result = results.argsort()[-1:][::-1]
 
         return results, top_result
